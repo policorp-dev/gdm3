@@ -1,0 +1,104 @@
+#!/usr/bin/make -f
+
+include /usr/share/dpkg/architecture.mk
+include /usr/share/dpkg/buildflags.mk
+include /usr/share/dpkg/pkg-info.mk
+include /usr/share/gnome-pkg-tools/1/rules/gnome-version.mk
+
+built_binaries := $(shell dh_listpackages)
+
+export systemdsystemunitdir = $(shell pkgconf --variable=systemdsystemunitdir systemd | sed s,^/,,)
+export udevdir = $(shell pkgconf --variable=udevdir udev | sed s,^/,,)
+
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+export DEB_LDFLAGS_MAINT_APPEND = -Wl,-z,defs
+
+# https://bugs.debian.org/1060838, https://bugs.debian.org/1111001
+export MESON_USE_NEW_CROSSGEN=1
+
+ifeq (linux,$(DEB_HOST_ARCH_OS))
+CONFFLAGS += \
+	-Dselinux=enabled \
+	-Dplymouth=enabled
+else
+CONFFLAGS += \
+	-Dwayland-support=false \
+	-Dselinux=disabled
+endif
+
+ifneq (,$(filter debug,$(DEB_BUILD_OPTIONS)))
+CONFFLAGS += --buildtype=debug
+endif
+
+pod2man := pod2man --release="GNOME $(DEB_GNOME_VERSION)" --center="Debian GNU/Linux"
+PODFILES := $(wildcard debian/*.pod)
+MANPAGES := $(patsubst %.pod,%,$(PODFILES))
+
+debian/%: debian/%.pod
+	$(pod2man) --section=$(shell echo $@ | sed 's/.*\.//') \
+		$< | sed -e 's/debian:://' >$@
+
+%:
+	dh $@
+
+# We set this up manually
+override_dh_installsystemd:
+
+override_dh_auto_configure:
+	X_BIN="/usr/bin/Xorg" \
+	dh_auto_configure -- \
+		-Ddistro=debian \
+		-Dipv6=true \
+		-Dat-spi-registryd-dir=/usr/lib/at-spi \
+		-Ddefault-path=/usr/local/bin:/usr/bin:/bin:/usr/games \
+		-Dcustom-conf=/etc/gdm3/daemon.conf \
+		-Dsysconfsubdir=gdm3 \
+		-Dworking-dir=/var/lib/gdm3 \
+		-Dxauth-dir=/run/gdm3 \
+		-Drun-dir=/run/gdm3 \
+		-Dpid-file=/run/gdm3.pid \
+		-Dlog-dir=/var/log/gdm3 \
+		-Dpam-mod-dir=/usr/lib/$(DEB_HOST_MULTIARCH)/security \
+		-Dscreenshot-dir=/run/gdm3/greeter \
+		-Ddefaults-conf=/usr/share/gdm/defaults.conf \
+		-Duser=Debian-gdm -Dgroup=Debian-gdm \
+		-Dlang-file=/etc/default/locale \
+		-Dran-once-marker-dir=/run/gdm3 \
+		-Dgnome-settings-daemon-dir="`pkg-config --variable=libexecdir gnome-settings-daemon`" \
+		-Dx11-support=true \
+		$(CONFFLAGS)
+
+override_dh_auto_build: $(OUTFILES) $(MANPAGES)
+	dh_auto_build
+
+override_dh_install:
+	dh_install
+ifneq ($(filter gdm3,$(built_binaries)),)
+	mv debian/gdm3/usr/sbin/gdm debian/gdm3/usr/sbin/gdm3
+	chmod 755 debian/gdm3/etc/gdm3/Xsession
+	chmod 755 debian/gdm3/usr/share/gdm/generate-config
+	dh_installpam -pgdm3 --name=gdm-autologin
+	dh_installpam -pgdm3 --name=gdm-launch-environment
+	dh_installpam -pgdm3 --name=gdm-password
+	dh_installpam -pgdm3 --name=gdm-fingerprint
+	dh_installpam -pgdm3 --name=gdm-smartcard-sssd-exclusive
+	dh_installpam -pgdm3 --name=gdm-smartcard-sssd-or-password
+	dh_installpam -pgdm3 --name=gdm-smartcard-pkcs11-exclusive
+endif
+
+override_dh_missing:
+	dh_missing --fail-missing
+
+override_dh_makeshlibs:
+	dh_makeshlibs -- -c4
+
+override_dh_installinit:
+	dh_installinit --noscripts
+
+override_dh_auto_clean:
+	dh_auto_clean
+	rm -f $(MANPAGES)
+	rm -f $(OUTFILES)
+	rm -f data/gdm.schemas data/61-gdm.rules
+
+override_dh_gnome_clean:

@@ -1,0 +1,4 @@
+# Defined by debian/rules
+dh-exec-subst-unknown-variable systemdsystemunitdir [*]
+dh-exec-subst-unknown-variable udevdir [*]
+dh-exec-useless-usage usr/lib/${DEB_HOST_MULTIARCH}/security/*.so [debian/gdm3.install*]
