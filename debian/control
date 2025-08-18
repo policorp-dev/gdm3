@@ -1,8 +1,7 @@
 Source: gdm3
 Section: gnome
 Priority: optional
-Maintainer: Debian GNOME Maintainers <pkg-gnome-maintainers@lists.alioth.debian.org>
-Uploaders: Jeremy Bícha <jbicha@ubuntu.com>, Laurent Bigonville <bigon@debian.org>, Marco Trevisan (Treviño) <marco@ubuntu.com>
+Maintainer: Edson Juliano Drosdeck <edson@policorp.com.br>
 Build-Depends: check (>= 0.9.4),
                dconf-cli:native (>= 0.19.90),
                debhelper-compat (= 13),
@@ -42,8 +41,6 @@ Build-Depends: check (>= 0.9.4),
                pkgconf,
                systemd-dev,
 Standards-Version: 4.7.2
-Vcs-Browser: https://salsa.debian.org/gnome-team/gdm
-Vcs-Git: https://salsa.debian.org/gnome-team/gdm.git
 Rules-Requires-Root: no
 Homepage: https://wiki.gnome.org/Projects/GDM/
 
