@@ -1,3 +1,9 @@
+gdm3 (48.Policorp-3) unstable; urgency=medium
+
+  * Added version in Policorp 13.1
+
+ -- Edson Juliano Drosdeck <edson@policorp.com.br>  Mon, 18 Aug 2025 12:34:09 +0000
+
 gdm3 (48.0-3) unstable; urgency=medium
 
   * Team upload
