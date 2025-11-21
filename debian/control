@@ -43,6 +43,7 @@ Build-Depends: check (>= 0.9.4),
 Standards-Version: 4.7.2
 Rules-Requires-Root: no
 Homepage: https://wiki.gnome.org/Projects/GDM/
+Vcs-Git: https://github.com/policorp-dev/gdm3.git
 
 Package: gdm3
 Architecture: amd64 arm64 armhf i386 loong64 mips64el mipsel ppc64el s390x riscv64
